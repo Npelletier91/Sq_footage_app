@@ -1,13 +1,78 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	
+	// Import type only, not the actual module
+	import type { Map as LeafletMap, LatLngTuple } from 'leaflet';
+	
 	let address = "";
 	let squareFootage: number | null = null;
 	let calculationComplete = false;
+	let map: LeafletMap | null = null;
+	let mapElement: HTMLElement;
+	let L: any;
+	
+	onMount(async () => {
+		if (browser) {
+			// Dynamically import Leaflet only in the browser
+			L = await import('leaflet');
+			
+			// Manually import the CSS
+			const link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+			document.head.appendChild(link);
+			
+			// Initialize map with default view
+			initMap();
+		}
+	});
+	
+	function initMap() {
+		// Make sure we're in browser environment and the element exists
+		if (browser && mapElement && L) {
+			// Create map instance if it doesn't exist
+			if (!map) {
+				map = L.map(mapElement).setView([40.7128, -74.0060], 13); // Default to NYC
+				
+				// Add the OpenStreetMap tiles
+				L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+					maxZoom: 19,
+					attribution: '© OpenStreetMap contributors'
+				}).addTo(map);
+			}
+		}
+	}
 	
 	function calculateArea() {		
 		// Simulate a calculation with a random number
 		setTimeout(() => {
 			squareFootage = Math.floor(Math.random() * 3000) + 1000;
 			calculationComplete = true;
+
+			if (browser && map && L) {
+				// Simulating new location with slight offset
+				const lat = 40.7128 + (Math.random() - 0.5) * 0.05;
+				const lng = -74.0060 + (Math.random() - 0.5) * 0.05;
+				
+				map.setView([lat, lng], 16);
+				
+				// Add a marker at the "found" location
+				L.marker([lat, lng])
+					.addTo(map)
+					.bindPopup(`<b>${address}</b><br>${squareFootage} sq ft`).openPopup();
+				
+				// Simulated property boundary (polygon)
+				const points: LatLngTuple[] = [
+					[lat - 0.001, lng - 0.001],
+					[lat + 0.001, lng - 0.001],
+					[lat + 0.001, lng + 0.001],
+					[lat - 0.001, lng + 0.001]
+				];
+				
+				L.polygon(points, {color: 'blue', fillColor: '#aaf', fillOpacity: 0.5})
+					.addTo(map);
+			}
 		}, 500);
 	}
 </script>
@@ -41,14 +106,10 @@
 	<div class="bg-gray-100 p-6 rounded-lg shadow-md flex flex-col">
 		<h3 class="text-xl font-semibold mb-4">Property Map</h3>
 		
-		<div class="flex-grow bg-gray-200 rounded-md border border-gray-300 flex items-center justify-center min-h-[200px]">
-			<div class="text-gray-500 text-center p-4">
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-				</svg>
-				<p>Map will display here</p>
-			</div>
-		</div>
+		<div 
+			bind:this={mapElement}
+			class="flex-grow rounded-md border border-gray-300 min-h-[300px] z-0" 
+		></div>
 	</div>
 </div>
 
@@ -80,5 +141,12 @@
 	@keyframes fadeIn {
 		from { opacity: 0; transform: translateY(10px); }
 		to { opacity: 1; transform: translateY(0); }
+	}
+	
+	/* Make sure the map container has a defined height */
+	:global(.leaflet-container) {
+		height: 100%;
+		width: 100%;
+		z-index: 0;
 	}
 </style> 
