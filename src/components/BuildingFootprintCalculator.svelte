@@ -4,8 +4,12 @@
   import * as turf from '@turf/turf';
   
   // Props
-  let { geocodingResult = null } = $props<{
+  let { 
+    geocodingResult = null,
+    building = $bindable(null)
+  } = $props<{
     geocodingResult: GeocodingResult | null;
+    building?: any;
   }>();
   
   // State
@@ -14,7 +18,6 @@
   let loading = $state(false);
   let error = $state<string | null>(null);
   let warning = $state<string | null>(null);
-  let building = $state<any>(null);
   let nearbyBuildings = $state<any[]>([]);
   let perimeter = $state(0);
   let area = $state(0);
@@ -26,6 +29,14 @@
     if (geocodingResult) {
       lat = geocodingResult.lat;
       lng = geocodingResult.lng;
+      
+      // Clear previous results
+      building = null;
+      nearbyBuildings = [];
+      error = null;
+      debugInfo = null;
+      perimeter = 0;
+      area = 0;
     }
   });
   
@@ -240,15 +251,6 @@
           Test GeoJSON Access
         </button>
         
-        {#if geocodingResult}
-          <button 
-            onclick={findBuilding}
-            disabled={loading}
-            class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded"
-          >
-            Use Geocoded Coordinates
-          </button>
-        {/if}
       </div>
     </div>
     

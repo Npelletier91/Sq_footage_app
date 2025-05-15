@@ -58,3 +58,27 @@ export function addMarker(map: LeafletMap, position: LatLngExpression, popupCont
   
   return marker;
 }
+
+/**
+ * Add a polygon to the map
+ * @param map The Leaflet map instance
+ * @param coordinates An array of coordinates in the format expected by Leaflet
+ * @param options Optional styling options for the polygon
+ * @returns The created polygon object
+ */
+export function addPolygon(map: LeafletMap, coordinates: LatLngExpression[], options: any = {}): any {
+  if (!L) throw new Error('Leaflet not initialized');
+  
+  // Default styling if not provided
+  const defaultOptions = {
+    color: '#3388ff',
+    weight: 3,
+    opacity: 0.7,
+    fillColor: '#3388ff',
+    fillOpacity: 0.2,
+    ...options
+  };
+  
+  const polygon = L.polygon(coordinates, defaultOptions).addTo(map);
+  return polygon;
+}

@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { geocodeAddress } from '$lib/services/geocoding';
 	import type { GeocodingResult } from '$lib/services/geocoding';
+	import type { Feature, Polygon, MultiPolygon } from 'geojson';
 	
 	// Props
 	let { 
 		address = $bindable(""),
-		geocodingResult = $bindable<GeocodingResult | null>(null) 
+		geocodingResult = $bindable<GeocodingResult | null>(null),
+		building = $bindable<Feature<Polygon | MultiPolygon> | null>(null)
 	} = $props();
 	
 	// Local state
-	let squareFootage = $state<number | null>(null);
 	let loading = $state(false);
 	
 	async function calculateEstimate() {
@@ -18,6 +19,9 @@
 		loading = true;
 		
 		try {
+			// Clear previous building data
+			building = null;
+			
 			// Get geocoding result for the address
 			const result = await geocodeAddress(address);
 			
@@ -31,7 +35,6 @@
 			// Simulate API call with timeout for square footage
 			setTimeout(() => {
 				// Generate random square footage between 1000 and 5000
-				squareFootage = Math.floor(Math.random() * 4000) + 1000;
 				loading = false;
 			}, 800);
 		} catch (error) {
@@ -90,13 +93,7 @@
 					<p class="text-sm text-gray-500 mb-2">Raw JSON Response</p>
 					<pre class="text-xs bg-gray-900 text-white p-3 rounded-md overflow-x-auto">{JSON.stringify(geocodingResult.rawResponse, null, 2)}</pre>
 				</div>
-				
-				{#if squareFootage}
-					<div class="p-4 bg-gray-50 rounded-md">
-						<p class="text-sm text-gray-500">Estimated Square Footage</p>
-						<p class="text-2xl font-bold text-blue-600">{squareFootage.toLocaleString()} sq ft</p>
-					</div>
-				{/if}
+
 			</div>
 		{:else}
 			<div class="flex justify-center items-center h-40 text-center">

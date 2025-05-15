@@ -3,15 +3,24 @@
 	import LeafletMap from '../components/LeafletMap.svelte';
 	import BuildingFootprintCalculator from '../components/BuildingFootprintCalculator.svelte';
 	import type { GeocodingResult } from '$lib/services/geocoding';
+	import type { Feature, Polygon, MultiPolygon } from 'geojson';
 	
 	// Shared state between components
 	let address = $state("");
 	let geocodingResult = $state<GeocodingResult | null>(null);
+	let building = $state<Feature<Polygon | MultiPolygon> | null>(null);
 	
 	// Debug when geocodingResult changes
 	$effect(() => {
 		if (geocodingResult) {
 			console.log("Page geocodingResult updated:", geocodingResult);
+		}
+	});
+	
+	// Debug when building changes
+	$effect(() => {
+		if (building) {
+			console.log("Page building data updated:", building);
 		}
 	});
 </script>
@@ -27,15 +36,18 @@
 	<div class="max-w-7xl mx-auto px-4 flex flex-col lg:flex-row gap-6 mb-16">
 		<div class="lg:w-1/2">
 			<h2 class="text-2xl font-bold mb-4">Address Geocoding</h2>
-			<AddressCalculator bind:address bind:geocodingResult />
+			<AddressCalculator bind:address bind:geocodingResult bind:building />
 		</div>
 		<div class="lg:w-1/2">
 			<h2 class="text-2xl font-bold mb-4">Map View</h2>
-			<LeafletMap geocodingResult={geocodingResult} />
+			<LeafletMap geocodingResult={geocodingResult} building={building} />
 		</div>
 	</div>
 	
 	<div class="max-w-7xl mx-auto px-4 mb-12 pt-8 border-t border-gray-200">
-		<BuildingFootprintCalculator geocodingResult={geocodingResult} />
+		<BuildingFootprintCalculator 
+			geocodingResult={geocodingResult} 
+			bind:building
+		/>
 	</div>
 </div>
